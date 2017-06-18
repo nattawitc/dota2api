@@ -65,8 +65,30 @@ func (c Client) GetLeagueListing() (GetLeagueListingResult, error) {
 	}
 }
 
-func (c Client) GetLiveLeagueGames() {
-
+func (c Client) GetLiveLeagueGames() (GetLiveLeagueGamesResult, error) {
+	errHeader := "GetLiveLeagueGames:"
+	url := matchUrl + getLiveLeagueGamesUrl + "?key=" + c.key
+	resp, err := http.Get(url)
+	if err != nil {
+		return GetLiveLeagueGamesResult{}, fmt.Errorf("%v %v", errHeader, err)
+	}
+	switch resp.StatusCode {
+	case http.StatusOK:
+		res := &GetLiveLeagueGamesWrapper{}
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return GetLiveLeagueGamesResult{}, fmt.Errorf("%v %v", errHeader, err)
+		}
+		err = json.Unmarshal(body, res)
+		if err != nil {
+			return GetLiveLeagueGamesResult{}, fmt.Errorf("%v %v", errHeader, err)
+		}
+		return res.Result, nil
+	case http.StatusForbidden:
+		return GetLiveLeagueGamesResult{}, fmt.Errorf("%v %v", errHeader, "Access denied")
+	default:
+		return GetLiveLeagueGamesResult{}, fmt.Errorf("%v %v", errHeader, "Unknown error with http status", resp.StatusCode)
+	}
 }
 
 func (c Client) GetMatchDetails() {
